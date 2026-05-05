@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="pFzTZs1B08mYHFjuOqSpk_8f4ne4Lj0wd2t92A5lSyk" />
+    
+    <title>Student Portal - Study Buddy Pro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /**
+         * GLOBAL VARIABLES & THEMES
+         */
+        :root {
+            --primary: #00a8ff;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #d1e3f0;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        body.dark-theme {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --border: #334155;
+        }
+
+        /**
+         * BASE STYLES
+         */
+        * { 
+            box-sizing: border-box; 
+            transition: 0.3s ease; 
+        }
+
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            overflow: hidden; 
+        }
+
+        /**
+         * AUTH LAYOUT COMPONENTS
+         */
+        #login-wrapper { 
+            position: fixed; 
+            width: 100%; 
+            height: 100%; 
+            z-index: 10000; 
+            display: flex; 
+            flex-direction: column; 
+            background: #f8fafc !important; 
+        }
+        
+        .login-card {
+            background: #ffffff !important; 
+            color: #1e293b !important;
+            border: 1px solid #d1e3f0 !important;
+        }
+
+        .split-part { 
+            height: 50%; 
+            width: 100%; 
+            background: #f8fafc; 
+            border: 0.5px solid #d1e3f0; 
+            transition: transform 1.2s cubic-bezier(0.85, 0, 0.15, 1); 
+            z-index: 10002; 
+        }
+
+        .move-up { 
+            transform: translateY(-100%); 
+        }
+
+        .move-down { 
+            transform: translateY(100%); 
+        }
+
+        .auth-container {
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            width: 90%; 
+            max-width: 420px; 
+            z-index: 10003; 
+            padding: 40px; 
+            border-radius: 25px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.1); 
+            text-align: center;
+        }
+
+        /**
+         * MODAL & OVERLAY STYLES
+         */
+        #year-screen, #payment-modal { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(255,255,255,0.9); 
+            backdrop-filter: blur(10px); 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 9000; 
+        }
+
+        .bg-shape { 
+            position: absolute; 
+            border-radius: 50%; 
+            filter: blur(80px); 
+            opacity: 0.4; 
+            z-index: -1; 
+        }
+
+        .circle-pink { 
+            width: 300px; 
+            height: 300px; 
+            background: #ffb6c1; 
+            top: -50px; 
+            left: -50px; 
+        }
+
+        .circle-blue { 
+            width: 250px; 
+            height: 250px; 
+            background: #87ceeb; 
+            bottom: -50px; 
+            right: -50px; 
+        }
+        
+        /**
+         * UI CARD STYLES
+         */
+        .pink-glass-card { 
+            background: rgba(255, 255, 255, 0.5); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.8); 
+            border-radius: 30px; 
+            padding: 35px; 
+            width: 85%; 
+            max-width: 380px; 
+            text-align: center; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+        }
+
+        .pink-glass-btn { 
+            width: 100%; 
+            background: rgba(255, 182, 193, 0.25); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 182, 193, 0.4); 
+            padding: 15px; 
+            border-radius: 15px; 
+            margin-bottom: 12px; 
+            font-weight: 700; 
+            color: #d63031; 
+            cursor: pointer; 
+        }
+
+        /**
+         * FORM ELEMENTS
+         */
+        .input-group { 
+            margin-bottom: 20px; 
+            text-align: left; 
+        }
+
+        .input-group label { 
+            display: block; 
+            font-size: 11px; 
+            color: var(--primary); 
+            font-weight: 800; 
+            margin-bottom: 8px; 
+            text-transform: uppercase; 
+        }
+
+        .input-group input { 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 12px; 
+            border: 2px solid #d1e3f0; 
+            background: #ffffff; 
+            color: #1e293b; 
+            outline: none; 
+        }
+
+        .btn-main { 
+            width: 100%; 
+            padding: 16px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-size: 16px; 
+        }
+
+        /**
+         * DASHBOARD COMPONENTS
+         */
+        #main-dashboard { 
+            height: 100vh; 
+            display: none; 
+            overflow-y: auto; 
+            background: var(--bg); 
+        }
+
+        .nav-header { 
+            background: var(--card); 
+            padding: 15px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid var(--border); 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+        }
+        
+        #sidebar { 
+            position: fixed; 
+            left: -280px; 
+            top: 0; 
+            height: 100%; 
+            width: 280px; 
+            background: var(--card); 
+            z-index: 11000; 
+            padding: 20px; 
+            border-right: 1px solid var(--border); 
+            transition: 0.4s; 
+        }
+
+        #sidebar.active { 
+            left: 0; 
+        }
+
+        .profile-section { 
+            padding: 20px 0; 
+            border-bottom: 1px solid var(--border); 
+            margin-bottom: 20px; 
+            text-align: center; 
+        }
+
+        .profile-img { 
+            width: 80px; 
+            height: 80px; 
+            border-radius: 50%; 
+            background: var(--primary); 
+            margin-bottom: 10px; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 30px; 
+            color: white; 
+        }
+
+        .menu-item { 
+            padding: 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            color: var(--text); 
+            text-decoration: none; 
+            border-radius: 10px; 
+            margin-bottom: 5px; 
+        }
+
+        /**
+         * CONTENT GRID STYLES
+         */
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
+            gap: 12px; 
+            padding: 20px; 
+        }
+
+        .subject-card { 
+            background: var(--card); 
+            padding: 20px 10px; 
+            border-radius: 20px; 
+            text-align: center; 
+            border: 1px solid var(--border); 
+            cursor: pointer; 
+        }
+
+        .subject-card.disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+        }
+
+        .subject-card i { 
+            font-size: 24px; 
+            color: var(--primary); 
+            margin-bottom: 12px; 
+        }
+
+        .subject-card h4 { 
+            margin: 5px 0; 
+            font-size: 14px; 
+        }
+
+        .subject-card span { 
+            font-size: 11px; 
+            opacity: 0.8; 
+        }
+
+        /**
+         * STORE & PAYMENT STYLES
+         */
+        .store-section { 
+            padding: 20px; 
+        }
+
+        .store-title { 
+            font-weight: 800; 
+            color: var(--primary); 
+            border-left: 4px solid var(--primary); 
+            padding-left: 10px; 
+            margin-bottom: 20px; 
+        }
+
+        .book-card { 
+            background: var(--card); 
+            border-radius: 20px; 
+            overflow: hidden; 
+            margin-bottom: 15px; 
+            border: 1px solid var(--border); 
+            display: flex; 
+            align-items: center; 
+            padding: 15px; 
+        }
+
+        .book-info { 
+            flex: 1; 
+            margin-left: 15px; 
+        }
+
+        .buy-btn { 
+            background: var(--success); 
+            color: white; 
+            padding: 10px 18px; 
+            border-radius: 10px; 
+            text-decoration: none; 
+            font-weight: 700; 
+            font-size: 13px; 
+            border: none; 
+            cursor: pointer; 
+        }
+
+        /**
+         * UTILITY CLASSES
+         */
+        .social-float { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            z-index: 999; 
+        }
+
+        .float-icon { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 24px; 
+            color: white; 
+            text-decoration: none; 
+        }
+
+        .wa { background: #25d366; }
+        .ig { background: #e1306c; }
+
+        .fade-out { opacity: 0; pointer-events: none; }
+        .switch-text { margin-top: 15px; font-size: 13px; color: #64748b; cursor: pointer; }
+        .switch-text b { color: var(--primary); }
+        .forgot-pass { display: block; margin-top: 10px; font-size: 12px; color: var(--danger); text-decoration: none; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body class="dark-theme">
+
+    <div id="sidebar">
+        <div style="text-align: right; cursor: pointer;" onclick="toggleMenu()">
+            <i class="fa-solid fa-xmark"></i>
+        </div>
+        <div class="profile-section">
+            <div class="profile-img">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <h3 style="margin: 0;" id="user-display-name">Student</h3>
+            <span id="sidebar-year" style="font-size: 12px; color: var(--primary);">DBATU Student</span>
+        </div>
+        <a href="#" class="menu-item"><i class="fa-solid fa-id-card"></i> Profile</a>
+        <a href="#" onclick="logoutUser()" class="menu-item"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+
+    <div id="login-wrapper">
+        <div class="split-part" id="pt"></div>
+        <div class="split-part" id="pb"></div>
+        <div class="auth-container login-card" id="lbox">
+            <h1 id="auth-title" style="color:#1e293b; margin:0;">CREATE ACCOUNT</h1>
+            <p id="auth-subtitle" style="color:#64748b;">Join Study Buddy Pro</p>
+            
+            <form id="loginForm">
+                <div id="reg-fields">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="reg-name" placeholder="Enter Full Name">
+                    </div>
+                    <div class="input-group">
+                        <label>PRN Number</label>
+                        <input type="text" id="reg-prn" placeholder="Enter PRN">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label id="id-label">Email Address</label>
+                    <input type="text" id="lid" placeholder="Enter Email" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="lps" placeholder="••••••••" required>
+                </div>
+                <div class="input-group" id="confirm-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="lps-conf" placeholder="••••••••">
+                </div>
+                
+                <button type="submit" class="btn-main" id="loginBtn">REGISTER NOW</button>
+                <span id="forgot-link" class="forgot-pass" onclick="resetPassword()" style="display:none;">Forgot Password?</span>
+                <p class="switch-text" onclick="toggleAuthMode()" id="toggle-link">Already a member? <b>Sign In</b></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="year-screen">
+        <div class="bg-shape circle-pink"></div>
+        <div class="bg-shape circle-blue"></div>
+        <div class="pink-glass-card">
+            <h2>Select Your Year</h2>
+            <p>Selection locked for 1 Year</p>
+            <div class="button-grid">
+                <button class="pink-glass-btn" onclick="saveYear('1st Year')">First Year (FE)</button>
+                <button class="pink-glass-btn" onclick="saveYear('2nd Year')">Second Year (SE)</button>
+                <button class="pink-glass-btn" onclick="saveYear('3rd Year')">Third Year (TE)</button>
+                <button class="pink-glass-btn" onclick="saveYear('4th Year')">Fourth Year (BE)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="payment-modal">
+        <div class="pink-glass-card">
+            <i class="fa-solid fa-circle-check" style="font-size: 50px; color: var(--success); margin-bottom: 15px;"></i>
+            <h3>Payment Initialized</h3>
+            <p>Enter your Mobile Number to receive the notes via WhatsApp/SMS</p>
+            <div class="input-group">
+                <input type="number" id="userMobile" placeholder="WhatsApp Number" style="width: 100%; text-align: center;">
+            </div>
+            <button class="btn-main" onclick="submitMobile()">SEND DETAILS</button>
+        </div>
+    </div>
+
+    <div id="main-dashboard">
+        <header class="nav-header">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <i class="fa-solid fa-bars" style="font-size:20px; cursor:pointer;" onclick="toggleMenu()"></i>
+                <b style="color:var(--primary); font-size:18px;">STUDY BUDDY PRO</b>
+            </div>
+            <div style="display:flex; align-items:center;">
+                <i class="fa-solid fa-sun" id="theme-toggle" onclick="toggleTheme()"></i>
+                <a href="https://www.instagram.com/Itz_govind_ade" target="_blank" style="color:#e1306c; font-size:22px; margin-left:15px;"><i class="fa-brands fa-instagram"></i></a>
+            </div>
+        </header>
+
+        <div class="grid-container">
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/1YR0XI41Lvo6VfplBK2_lEdk6qwNuD0TN')">
+                <i class="fa-solid fa-bolt"></i>
+                <h4>BEEE</h4>
+                <span>Material</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/1EEcj0Ap0J4AccpcuBnSXud0MXdtV4ufa')">
+                <i class="fa-solid fa-calculator"></i>
+                <h4>Maths-I</h4>
+                <span>Material</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/1kRb9GQOvR6A5y3N9S0CsEaDFImuMXpI9')">
+                <i class="fa-solid fa-square-root-variable"></i>
+                <h4>Maths-II</h4>
+                <span>Notes</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/1spPo0c0woQNVmqDbBS4Q80nFBH9QaxTk')">
+                <i class="fa-solid fa-atom"></i>
+                <h4>Physics</h4>
+                <span>Material</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/1BDXbPjqA2BEZOvYjQGvmrSwuL9LRGJh3')">
+                <i class="fa-solid fa-vial"></i>
+                <h4>Chemistry</h4>
+                <span>Material</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/1nUja2CyL5_rhkL5o_SW8Tj1QkKY9HsyS')">
+                <i class="fa-solid fa-code"></i>
+                <h4>Python/CP</h4>
+                <span>Notes Added</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/1dRIqwJ6B_auZy9MrvUkp6phuasOXwhtF')">
+                <i class="fa-solid fa-compass-drafting"></i>
+                <h4>Graphics</h4>
+                <span>Notes</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/16RgNq8s-IP1v_by6kSVzbUoeyQ0brkmn')">
+                <i class="fa-solid fa-gears"></i>
+                <h4>Mechanics</h4>
+                <span>Notes</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/11mCQ4bJZxWrD7JSKI__-TWfqbQh8diWI')">
+                <i class="fa-solid fa-pen-nib"></i>
+                <h4>Comm. Skills</h4>
+                <span>Material</span>
+            </div>
+            
+            <div class="subject-card" onclick="window.open('https://drive.google.com/drive/folders/1bVCkZnwSTcHz_ZKK_jXYnodXv6XWSlMz')">
+                <i class="fa-solid fa-helmet-safety"></i>
+                <h4>Civil/Mech</h4>
+                <span>Material</span>
+            </div>
+        </div>
+
+        <div class="store-section">
+            <div class="store-title">BUY STUDY MATERIAL</div>
+            
+            <div class="book-card">
+                <i class="fa-solid fa-star" style="font-size:30px; color:#f1c40f; margin-left:15px;"></i>
+                <div class="book-info">
+                    <b>PYQ PRO (Mechanics)</b><br>
+                    <small style="color:var(--primary);">Solved Papers Included</small>
+                </div>
+                <button onclick="handlePayment('149', 'PYQ_PRO_Mechanics')" class="buy-btn">BUY ₹149</button>
+            </div>
+            
+            <div class="book-card">
+                <i class="fa-solid fa-book-open" style="font-size:30px; color:var(--primary); margin-left:15px;"></i>
+                <div class="book-info">
+                    <b>Handwritten Notes Combo</b><br>
+                    <small style="color:var(--primary);">Perfect for exams</small>
+                </div>
+                <button onclick="handlePayment('99', 'Handwritten_Notes')" class="buy-btn">BUY ₹99</button>
+            </div>
+            
+            <div class="book-card">
+                <i class="fa-solid fa-file-invoice" style="font-size:30px; color:var(--primary); margin-left:15px;"></i>
+                <div class="book-info">
+                    <b>Question Bank</b><br>
+                    <small style="color:var(--primary);">Solved Papers</small>
+                </div>
+                <button onclick="handlePayment('49', 'Question_Bank')" class="buy-btn">BUY ₹49</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="social-float">
+        <a href="https://wa.me/qr/B73RKPKOQS22M1" target="_blank" class="float-icon wa">
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+        <a href="https://www.instagram.com/Itz_govind_ade" target="_blank" class="float-icon ig">
+            <i class="fa-brands fa-instagram"></i>
+        </a>
+    </div>
+
+    <script>
+        /**
+         * APPLICATION INITIALIZATION
+         */
+        (function(){ 
+            emailjs.init("3-o8A2mq4JHtCk0EG"); 
+        })();
+
+        let currentPurchase = "";
+        let isRegisterMode = true; 
+
+        /**
+         * FIREBASE AUTH & DB CONFIGURATION
+         */
+        const firebaseConfig = {
+            apiKey: "AIzaSyDISh1A7Guc0UtwHyLv8X4sDXgnqIHHxdQ",
+            authDomain: "student-91762.firebaseapp.com",
+            projectId: "student-91762",
+            storageBucket: "student-91762.firebasestorage.app",
+            messagingSenderId: "30682166558",
+            appId: "1:30682166558:web:d27a2b93582a4932a9050f"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        /**
+         * AUTHENTICATION MODE TOGGLE
+         */
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            
+            const authTitle = document.getElementById('auth-title');
+            const authSubtitle = document.getElementById('auth-subtitle');
+            const loginBtn = document.getElementById('loginBtn');
+            const regFields = document.getElementById('reg-fields');
+            const confirmGroup = document.getElementById('confirm-group');
+            const forgotLink = document.getElementById('forgot-link');
+            const idLabel = document.getElementById('id-label');
+            const toggleLink = document.getElementById('toggle-link');
+
+            authTitle.innerText = isRegisterMode ? "CREATE ACCOUNT" : "WELCOME BACK";
+            authSubtitle.innerText = isRegisterMode ? "Join Study Buddy Pro" : "Sign in to continue";
+            loginBtn.innerText = isRegisterMode ? "REGISTER NOW" : "SIGN IN";
+            
+            regFields.style.display = isRegisterMode ? "block" : "none";
+            confirmGroup.style.display = isRegisterMode ? "block" : "none";
+            forgotLink.style.display = isRegisterMode ? "none" : "block";
+            idLabel.innerText = isRegisterMode ? "Email Address" : "Email or PRN";
+            
+            toggleLink.innerHTML = isRegisterMode ? 
+                'Already a member? <b>Sign In</b>' : 'New student? <b>Create Account</b>';
+        }
+
+        /**
+         * PASSWORD RECOVERY FUNCTION
+         */
+        async function resetPassword() {
+            const email = prompt("Please enter your registered Email ID to reset password:");
+            
+            if (email) {
+                try {
+                    await firebase.auth().sendPasswordResetEmail(email);
+                    alert("Password reset link has been sent to your email!");
+                } catch (error) {
+                    alert("Error: " + error.message);
+                }
+            }
+        }
+
+        /**
+         * PRIMARY AUTHENTICATION HANDLER
+         */
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const user = document.getElementById('lid').value;
+            const pass = document.getElementById('lps').value;
+            const btn = document.getElementById('loginBtn');
+
+            btn.innerText = "Processing...";
+
+            try {
+                if (isRegisterMode) {
+                    const passConf = document.getElementById('lps-conf').value;
+                    const fullName = document.getElementById('reg-name').value;
+                    const prnNo = document.getElementById('reg-prn').value;
+
+                    if(pass !== passConf) {
+                        throw new Error("Passwords do not match!");
+                    }
+                    
+                    const cred = await firebase.auth().createUserWithEmailAndPassword(user, pass);
+                    
+                    await db.collection("users").doc(cred.user.uid).set({
+                        name: fullName,
+                        prn: prnNo,
+                        email: user
+                    });
+                    
+                    localStorage.setItem('userLogin', fullName);
+                    alert("Registration Successful!");
+                } else {
+                    let loginEmail = user;
+                    
+                    if (!user.includes('@')) {
+                        const snap = await db.collection("users").where("prn", "==", user).get();
+                        
+                        if (snap.empty) {
+                            throw new Error("PRN not found!");
+                        }
+                        
+                        loginEmail = snap.docs[0].data().email;
+                        localStorage.setItem('userLogin', snap.docs[0].data().name);
+                    }
+                    
+                    await firebase.auth().signInWithEmailAndPassword(loginEmail, pass);
+                }
+                
+                finalizeLogin(user);
+            } catch (error) {
+                btn.innerText = isRegisterMode ? "REGISTER NOW" : "SIGN IN";
+                alert(error.message);
+            }
+        });
+
+        /**
+         * POST-LOGIN ANIMATION & TRANSITION
+         */
+        function finalizeLogin(user) {
+            document.getElementById('lbox').classList.add('fade-out');
+            document.getElementById('pt').classList.add('move-up');
+            document.getElementById('pb').classList.add('move-down');
+            
+            setTimeout(() => {
+                document.getElementById('login-wrapper').style.display = 'none';
+                const savedYear = localStorage.getItem('userYear');
+                
+                if(savedYear) {
+                    showDashboard(savedYear);
+                } else {
+                    document.getElementById('year-screen').style.display = 'flex';
+                }
+            }, 1200);
+        }
+
+        /**
+         * DASHBOARD CORE FUNCTIONS
+         */
+        function saveYear(year) {
+            localStorage.setItem('userYear', year);
+            showDashboard(year);
+        }
+
+        function showDashboard(year) {
+            document.getElementById('login-wrapper').style.display = 'none';
+            document.getElementById('year-screen').style.display = 'none';
+            document.getElementById('main-dashboard').style.display = 'block';
+            
+            document.getElementById('sidebar-year').innerText = year;
+            document.getElementById('user-display-name').innerText = localStorage.getItem('userLogin') || "Student";
+            
+            document.body.style.overflow = 'auto';
+        }
+
+        function logoutUser() {
+            firebase.auth().signOut().then(() => {
+                localStorage.clear();
+                location.reload();
+            });
+        }
+
+        window.onload = () => {
+            document.getElementById('login-wrapper').style.display = 'flex';
+        };
+
+        /**
+         * UI COMPONENTS INTERACTION
+         */
+        function toggleMenu() { 
+            document.getElementById('sidebar').classList.toggle('active'); 
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const icon = document.getElementById('theme-toggle');
+            icon.classList.toggle('fa-sun'); 
+            icon.classList.toggle('fa-moon');
+        }
+
+        /**
+         * PAYMENT GATEWAY LOGIC (UPI INTENT)
+         */
+        function handlePayment(amount, item) {
+            currentPurchase = item;
+            
+            // Logic to trigger Payment App (PhonePe, GPay, etc.)
+            const upiURL = `upi://pay?pa=9049321230@ptyes&pn=StudyBuddy&am=${amount}&cu=INR&tn=${item}`;
+            window.location.href = upiURL;
+            
+            // Show follow-up modal after a short delay
+            setTimeout(() => { 
+                document.getElementById('payment-modal').style.display = 'flex'; 
+            }, 3000);
+        }
+
+        /**
+         * DATA SUBMISSION TO ADMIN
+         */
+        function submitMobile() {
+            const mobile = document.getElementById('userMobile').value;
+            
+            if(mobile.length < 10) { 
+                alert("Please enter valid number"); 
+                return; 
+            }
+            
+            emailjs.send('service_tfkq0p9', 'template_8361mu5', {
+                Username: localStorage.getItem('userLogin'),
+                Mobile: mobile, 
+                Item: currentPurchase
+            }).then(() => {
+                alert("Details submitted! We will send your material shortly.");
+                document.getElementById('payment-modal').style.display = 'none';
+            }).catch((err) => {
+                alert("Submission failed. Please try again.");
+                console.error(err);
+            });
+        }
+
+        /**
+         * END OF SCRIPT - STUDY BUDDY PRO v3.0
+         */
+    </script>
+</body>
+</html>
